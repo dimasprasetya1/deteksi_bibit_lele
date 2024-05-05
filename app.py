@@ -5,6 +5,8 @@ from PIL import Image
 import os
 from tempfile import NamedTemporaryFile
 from scipy import ndimage
+import datetime
+import pandas as pd
 
 # Fungsi untuk memuat template
 def load_templates(template_dir='edited/'):
@@ -52,6 +54,39 @@ def process_image(image, templates, threshold=0.5):
 
     return contoured_image, counted_lele
 
+
+# Fungsi untuk menyimpan hasil deteksi ke dalam file CSV
+def save_detection_results(count_lele):
+    results_dir = 'detection_results'
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+    
+    results_file = os.path.join(results_dir, 'lele_detection_history.csv')
+    
+    if not os.path.exists(results_file):
+        df = pd.DataFrame(columns=['Timestamp', 'Detected Lele Count'])
+    else:
+        df = pd.read_csv(results_file)
+    
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    new_row = pd.DataFrame([[now, count_lele]], columns=['Timestamp', 'Detected Lele Count'])
+    df = pd.concat([df, new_row], ignore_index=True)
+    
+    # Menyesuaikan indeks agar mulai dari 1 sebelum menyimpan
+    df.index = df.index + 1
+    
+    df.to_csv(results_file, index_label='ID')
+
+# Fungsi untuk menampilkan history dari file CSV
+def display_history():
+    results_dir = 'detection_results'
+    results_file = os.path.join(results_dir, 'lele_detection_history.csv')
+    
+    if os.path.exists(results_file):
+        df = pd.read_csv(results_file, index_col='ID')
+        st.write("History Deteksi Bibit Lele:")
+        st.dataframe(df)
+
 # Memuat template
 templates = load_templates()
 
@@ -65,3 +100,8 @@ if uploaded_file is not None:
     image = np.array(image)
     result_image, count_lele = process_image(image, templates)
     st.image(result_image, caption=f'Total bibit lele terdeteksi: {count_lele}', use_column_width=True)
+    # Simpan hasil deteksi
+    save_detection_results(count_lele)
+    
+ # Tampilkan history
+display_history()
