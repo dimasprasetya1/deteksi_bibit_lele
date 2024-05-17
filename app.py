@@ -21,6 +21,7 @@ def load_templates(template_dir='edited/'):
 
 # Fungsi utama untuk memproses gambar
 def process_image(image, templates, threshold=0.5):
+    image = cv2.convertScaleAbs(image, alpha = 1.8, beta = 10)
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     _, binary_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
     kernel = np.ones((3,3), np.uint8)
@@ -83,9 +84,9 @@ def display_history():
     results_file = os.path.join(results_dir, 'lele_detection_history.csv')
     
     if os.path.exists(results_file):
-        df = pd.read_csv(results_file, index_col='ID')
+        df = pd.read_csv(results_file)
         st.write("History Deteksi Bibit Lele:")
-        st.dataframe(df)
+        st.dataframe(df[['Timestamp','Detected Lele Count']])
 
 # Memuat template
 templates = load_templates()
